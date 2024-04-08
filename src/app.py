@@ -28,10 +28,8 @@ if SHOW_SWAGGER:
         return app.openapi()
 
 # ROUTES
-from hello_world.router import router as hello_world_router
 from users.router import router as users_router
 from auth.routes import router as auth_router
 
-app.include_router(hello_world_router, tags=['Products'])
 app.include_router(users_router, tags=['Users'])
 app.include_router(auth_router, tags=['Auth'])
