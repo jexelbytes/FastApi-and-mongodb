@@ -1,16 +1,16 @@
-from beanie import Document
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from typing import Optional
-from typing_extensions import Annotated
-from pydantic import AnyUrl, EmailStr, Field, constr
+from pydantic import AnyUrl, EmailStr, Field
+from auth.extra import hash_password
+from .documents import User
 
-class User(Document):
+class CreateUser(BaseModel):
     
     email: EmailStr
     first_name: str = Field(min_length=1, max_length=128)
     last_name: str = Field(min_length=1, max_length=128)
     age: Optional[int] = Field(ge=18, default=None)
-    password: str
+    password: str = Field(min_length=8, max_length=512)
     photo: AnyUrl = None
     
     model_config = {
@@ -28,13 +28,27 @@ class User(Document):
         }
     }
     
+    @model_validator(mode="after")
+    def validate_pass(self ) -> 'UpdateUser':
+        self.password = hash_password(self.password)
+        return self
+    
+    @model_validator(mode="after")
+    def validate_email(self) -> 'CreateUser':
+        self.email = self.email.lower()
+        user = User.find_one({"email":self.email})
+        if user:
+            raise ValueError("email already in use.")
+        
+        return self
+
 class UpdateUser(BaseModel):
     
     email: EmailStr = None
     first_name: str = Field(min_length=1, max_length=128, default=None)
     last_name: str = Field(min_length=1, max_length=128, default=None)
     age: int = Field(ge=18, default=None)
-    password: str = None
+    password: Optional[str] = Field(min_length=8, max_length=512, default=None)
     photo: AnyUrl = None
     
     model_config = {
@@ -51,3 +65,14 @@ class UpdateUser(BaseModel):
             ]
         }
     }
+    
+    @model_validator(mode="after")
+    def validate_pass_email(self ) -> 'UpdateUser':
+        
+        if self.password != None:
+            self.password = hash_password(self.password)
+        
+        if self.email != None:
+            self.email = self.email.lower()
+        
+        return self
