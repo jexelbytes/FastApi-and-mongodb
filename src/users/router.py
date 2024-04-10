@@ -3,15 +3,28 @@ from fastapi import APIRouter, Depends
 from .schemas import UpdateUser, CreateUser
 from auth.schemas import ActiveSession
 from auth.dependencies import jwtBearer
-from .controllers import get_all_users, get_user_by_id, create_user, update_user
+from .controllers import search_user, get_user_by_id, create_user, update_user
 router = APIRouter()
 
 
 @router.get('/my_profile')
 async def get_profile(session:ActiveSession = Depends(jwtBearer())): return await get_user_by_id(session.user_id)
 
-@router.get('/user')
-async def get_users(): return await get_all_users()
+@router.get('/user', dependencies=[Depends(jwtBearer())])
+async def serach_users(
+        email:str=None,
+        name:str=None,
+        age:str=None,
+        limit:int = 100,
+        page:int = 0
+    ):
+    return await search_user(
+        email=email,
+        name=name,
+        age=age,
+        limit=limit,
+        page=page
+    )
 
 @router.get('/user{id}')
 async def get_users(id:PydanticObjectId): return await get_user_by_id(id=id)

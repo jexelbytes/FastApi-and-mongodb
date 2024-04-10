@@ -3,10 +3,11 @@ from beanie import Document, Indexed
 from pydantic import model_serializer
 from typing import Optional, Any, Annotated, Dict
 from pydantic import AnyUrl, EmailStr, Field
+import pymongo
 
 class User(Document):
     
-    email: Annotated[EmailStr, Indexed(unique=True)]
+    email: Annotated[EmailStr, Indexed(unique=True, index_type=pymongo.TEXT)]
     first_name: str = Field(min_length=1, max_length=128)
     last_name: str = Field(min_length=1, max_length=128)
     age: Optional[int] = Field(ge=18, default=None)
